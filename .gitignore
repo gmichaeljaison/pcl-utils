@@ -1,3 +1,14 @@
+# Build files
+build/
+
+# IDE & OS files
+*.*~
+*.sw*
+.DS_Store
+
+
+# General c++ gitignore
+
 # Compiled Object files
 *.slo
 *.lo
