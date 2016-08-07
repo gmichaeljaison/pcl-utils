@@ -18,3 +18,12 @@ target_link_libraries(pcl_utils_lib
     ${PCL_LIBRARIES}
 )
 
+# Examples
+
+include_directories(src)
+
+# file(GLOB_RECURSIVE examples examples/*.cpp)
+
+add_executable(basic examples/basic.cpp)
+target_link_libraries(basic pcl_utils_lib)
+
