@@ -1,0 +1,14 @@
+/**
+@breif Documentation file for Mainpage and defgroups.   
+@author Michael Jaison Gnanasekar (gmichaeljaison@gmail.com)
+*/
+/** @defgroup PCL Utils */
+/**
+@mainpage PCL Utils - Utility functions for PCL Library
+
+Using C++ PCL library introduces a lot of boilerplate code. Most of the operations requires redundant parameters. This utility functions helps to write easy and clean code to use PCL.
+
+Check the classes tab to see the utility functions documentation.
+
+*/
+

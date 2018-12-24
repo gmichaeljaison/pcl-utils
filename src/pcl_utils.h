@@ -40,9 +40,8 @@ namespace utils {
 /**
  * Utility functions for PCL library
  *
- * <By design, it is not a good practise to create a class with all static
- * functions. But it is done to facilitate template to the class level, so that each
- * function does not need template argument supplied by the consumer>
+ * Once the class is templated, the static methods act as common utiltiy
+ * functions for that specific type unless it accepts another type.
  */
 template <typename T>
 class PclUtils
@@ -51,6 +50,12 @@ class PclUtils
   typedef pcl::PointCloud<T> PclCloud;
 
  public:
+  /**
+   * Creates a PCL Visualizer with general settings such as black background and
+   * added coordinate system (xyz axes).
+   * 
+   * @return Created PCL Visualizer
+   */
   static pcl::visualization::PCLVisualizer::Ptr pclViewer() {
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer);
     viewer->setBackgroundColor(0,0,0);
@@ -59,12 +64,20 @@ class PclUtils
     return viewer;
   }
 
+  /**
+   * Creates a PCL Visualizer with the input cloud added in it.
+   */
   static pcl::visualization::PCLVisualizer::Ptr pclViewer(typename PclCloud::Ptr& cloud) {
     pcl::visualization::PCLVisualizer::Ptr viewer = pclViewer();
     viewer->addPointCloud<T>(cloud);
     return viewer;
   }
 
+  /**
+   * Opens the PCL Visualizer and shows up the given point cloud.
+   * 
+   * @param cloud The input pointcloud pointer
+   */
   static void showCloud(typename PclCloud::Ptr& cloud) {
     pcl::visualization::PCLVisualizer::Ptr viewer = PclUtils::pclViewer(cloud);
     viewer->spin();
@@ -73,7 +86,12 @@ class PclUtils
   /**
    * Add pointcloud to the visualizer with colored option.
    * Default color is RED
-   * To choose random color, pass r as any negative number.
+   *
+   * @param viewer PCL Visualizer object that is created either using pcl-utils or PCL.
+   * @param cloud Input pointcloud pointer.
+   * @param r Red component. To choose random color, pass r as any negative number.
+   * @param g Green component.
+   * @param b Blue component.
    */
   static void addColoredCloud(pcl::visualization::PCLVisualizer::Ptr& viewer,
                               typename PclCloud::Ptr& cloud,
@@ -95,6 +113,10 @@ class PclUtils
    * Downsample pointcloud using given leaf size. 
    * 
    * Refer pcl::VoxelGrid for details.
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param outcloud Output pointcloud pointer.
+   * @param leaf Leaf size for VoxelGrid downsampling (default is 0.005)
    */
   static void downsample(typename PclCloud::Ptr& cloud, typename PclCloud::Ptr& outcloud,
                          const float leaf = 0.005f) {
@@ -108,6 +130,10 @@ class PclUtils
    * Surface normal estimation for the given pointcloud
    *
    * Refer pcl::NormalEstimationOMP for details
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param outcloud Output pointcloud pointer.
+   * @param radius Radius search parameter for Normal Estimation.
    */
   template <typename PointNT>
   static void estimateNormal(typename pcl::PointCloud<PointNT>::Ptr& cloud, 
@@ -124,7 +150,13 @@ class PclUtils
   }
 
   /**
-   * Crop an organized pointcloud using the given bounding box
+   * Crop an organized pointcloud using the given bounding box.
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param topleft Eigen vector for (x,y) value to represent topleft corner of
+   * the bounding box.
+   * @param bottomright Eigen vector for bottom-right corner.
+   * @return Cropped pointcloud
    */
   static typename PclCloud::Ptr cropPointCloud(typename PclCloud::Ptr& cloud, 
                                       Eigen::Vector2i& topleft, Eigen::Vector2i& bottomright)
@@ -151,6 +183,13 @@ class PclUtils
     return out_cloud;
   }
 
+  /**
+   * Crop an organized pointcloud using the given bounding box.
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param box Eigen vector that contains (x,y,x2,y2) denoting a bounding box.
+   * @return Cropped pointcloud
+   */
   static typename PclCloud::Ptr cropPointCloud(typename PclCloud::Ptr& cloud,
                              const Eigen::Vector4i& box) {
     Eigen::Vector2i topleft(box[0], box[1]);
@@ -159,7 +198,13 @@ class PclUtils
   }
 
   /**
-   * Pass-Through filter for any axis
+   * Pass-Through filter for any axis. Filters the points that meets the given
+   * minmax criteria. Filter is applied on the input pointcloud itself.
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param axis A string denoting the axis. Either "x" / "y" / "z".
+   * @param min Minimum allowed value for the given axis.
+   * @param max Maximum allowed value for the given axis.
    */  
   static void filterOutliers(typename PclCloud::Ptr& cloud, std::string axis, float min, float max) {
     pcl::PassThrough<T> pass;
@@ -172,7 +217,15 @@ class PclUtils
 
 
   /**
-   * Extract the cloud points from given indices
+   * Indices points extractor. Extract the points from the pointcloud based on the input indices.
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param indices Vector of indices of the points in the pointcloud.
+   * @param negative If true, the indices are excluded and remaining points are
+   * retained. Default is false.
+   * @param keep_organized If true, the points that does not met the condition
+   * will be set to NaN.
+   * @return Output cloud after filtering.
    */
   static typename PclCloud::Ptr extractIndices(typename PclCloud::Ptr& cloud, 
                                                std::vector<int>& indices,
@@ -183,6 +236,17 @@ class PclUtils
     return extractIndices(cloud, pcl_indices, negative, keep_organized);
   }
   
+  /**
+   * Indices points extractor. Extract the points from the pointcloud based on the input indices.
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param indices PointIndices object that represents the input indices.
+   * @param negative If true, the indices are excluded and remaining points are
+   * retained. Default is false.
+   * @param keep_organized If true, the points that does not met the condition
+   * will be set to NaN.
+   * @return Output cloud after filtering.
+   */
   static typename PclCloud::Ptr extractIndices(typename PclCloud::Ptr& cloud, 
                                                pcl::PointIndices::Ptr& indices,
                                                bool negative = false,
@@ -192,6 +256,17 @@ class PclUtils
     return out_cloud;
   }
 
+  /**
+   * Indices points extractor. Extract the points from the pointcloud based on the input indices.
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param indices Vector of indices of the points in the pointcloud.
+   * @param outcloud Output pointcloud pointer.
+   * @param negative If true, the indices are excluded and remaining points are
+   * retained. Default is false.
+   * @param keep_organized If true, the points that does not met the condition
+   * will be set to NaN.
+   */
   static void extractIndices(typename PclCloud::Ptr& cloud, 
                               pcl::PointIndices::Ptr& indices,
                               typename PclCloud::Ptr& out_cloud,
@@ -205,7 +280,13 @@ class PclUtils
     filter.filter(*out_cloud);
   }
 
-
+  /**
+   * Fits a plane in the given pointcloud using RANSAC.
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param coeff Output plane coefficients of the fitten plane.
+   * @param inliers Output point indices of the inlier points.
+   */
   static void segmentPlane(typename PclCloud::Ptr& cloud, 
       pcl::ModelCoefficients::Ptr& coeff, 
       pcl::PointIndices::Ptr& inliers)
@@ -226,7 +307,14 @@ class PclUtils
   }
 
   /**
-   * Filter out the pointcloud and keep only table-top
+   * Filter out the pointcloud and keep only table-top points.
+   *
+   * This utility can be used to filter the objects on top of the table.
+   * Input cloud is modified directly.
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param min_table_z Minimum z value to be considered.
+   * @param min_table_x Minimum x value to be considered.
    */
   static void filterTableTop(typename PclCloud::Ptr& cloud, float min_table_z, float min_table_x) {
     // Remove outliers (keep inliers)
@@ -244,7 +332,7 @@ class PclUtils
   }
 
   /**
-   * Convert XYZ cloud to XYZRGB cloud
+   * Convert XYZ cloud to XYZRGB cloud.
    */
   static void convertToXYZRGB(typename pcl::PointCloud<T>& cloud, Eigen::Vector3i& color, 
       pcl::PointCloud<pcl::PointXYZRGB>& out_cloud)
@@ -262,7 +350,14 @@ class PclUtils
   }
 
   /**
-   * Cluster pointcloud by Euclidean distance
+   * Cluster pointcloud by Euclidean distance.
+   *
+   * ClusterTolerance: 0.02 // 2cm
+   * Min cluster size: 600
+   * Max cluster size: 50000
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param cluster_indices Output vector of PointIndices of all the clusters
    */
   static void cluster(typename PclCloud::Ptr& cloud, std::vector<pcl::PointIndices>& cluster_indices) {
     using std::vector;
@@ -283,26 +378,13 @@ class PclUtils
     ec.extract (cluster_indices);
   }
 
-  static void colorClusters(typename PclCloud::Ptr& cloud, std::vector<pcl::PointIndices>& cluster_indices)
-  {
-    using std::vector;
-
-    int idx = 0;
-    for (vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); 
-      it != cluster_indices.end(); ++it, ++idx)
-    {
-      for (vector<int>::const_iterator pit = it->indices.begin(); 
-        pit != it->indices.end(); ++pit)
-      {
-        T& p = cloud->points[*pit];
-        p.r = (idx * 100) % 255;
-        p.g = (idx * 10) % 255;
-        p.b = (idx * 200) % 255;
-      }
-    }
-    showCloud(cloud);
-  }
-
+  /**
+   * Find the enclosing 2D bouding box of the given cluster
+   *
+   * @param indices Cluster indices in the pointcloud
+   * @param cloud Input pointcloud pointer.
+   * @return Eigen vector of (x,y,x2,y2) bouding box.
+   */
   static Eigen::Vector4i findBox(const pcl::PointIndices& indices, typename PclCloud::Ptr& cloud)
   {
     int minxi = cloud->width, maxxi = 0, minyi = cloud->height, maxyi = 0;
@@ -322,7 +404,13 @@ class PclUtils
   }
 
   /**
-   * Finds the closest Non-NaN point around the given location
+   * Finds the closest Non-NaN point around the given location. Searches for the
+   * NonNan point in a circular way by increasing radius on each iteration.
+   *
+   * @param cloud Input pointcloud pointer.
+   * @param cx Center point x-value.
+   * @param cy Center point y-value.
+   * @return The closest point.
    */
   static T findNearestNonNan(typename PclCloud::Ptr& cloud, int cx, int cy) {
     T pointCenter = (*cloud)(cx, cy);
@@ -349,6 +437,11 @@ class PclUtils
     return pointCenter;
   }
 
+  /**
+   * Factory method to create a Point of templated type.
+   *
+   * @return Newly created point.
+   */
   static T createPoint(float x, float y, float z) {
     T point;
     point.x = x;    
@@ -357,6 +450,12 @@ class PclUtils
     return point;
   }
 
+  /**
+   * Factory method to create pointcloud from the Eigen matrix
+   *
+   * @param mat Eigen matrix of size 3xn.
+   * @return Newly created pointcloud pointer.
+   */
   static typename PclCloud::Ptr createCloud(const Eigen::Ref<const Eigen::MatrixXf>& mat) {
     typename PclCloud::Ptr cloud (new PclCloud);
 
@@ -370,6 +469,12 @@ class PclUtils
     return cloud;
   }
 
+  /**
+   * Creates a 3D oriented bounding box around the given pointcloud.
+   *
+   * @param cloud Input pointcloud pointer.
+   * @return Eigen matrix of size 3x8. Eight point of the cuboid.
+   */
   static Eigen::Matrix<float, 3, 8> createOrientedBox(typename PclCloud::Ptr& cloud) {
     pcl::PCA<T> pca;
     pca.setInputCloud(cloud);
